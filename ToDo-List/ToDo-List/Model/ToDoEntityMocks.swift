@@ -13,9 +13,15 @@ extension ToDoEntity {
             let todo = ToDoEntity(context: context)
             todo.id = UUID()
             todo.taskTitle = "Task #\(i)"
+            todo.taskContent = texts.randomElement()
             todo.isDone = Bool.random()
             todo.creationDate = Date().addingTimeInterval(Double(i) * 86400)
             return todo
         }
     }
+
+    static var texts = [
+        "Выделить время для работы над проектом на работе. Сфокусироваться на выполнении важных задач",
+        "Some text to check how it will look like in the view"
+    ]
 }

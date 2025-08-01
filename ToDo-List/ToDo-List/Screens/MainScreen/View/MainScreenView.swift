@@ -25,7 +25,7 @@ struct MainScreenView: View {
 
     var tasksNumberLable: String {
         let number = todos.count
-        var taskNumber: String = "\(number) Задач"
+
         if   (11...14).contains( number % 100 ) {
             return "\(number) Задач"
         }
@@ -36,7 +36,7 @@ struct MainScreenView: View {
             return "\(number) Задачи"
         }
 
-        return taskNumber
+        return "\(number) Задач"
     }
 
     var body: some View {
@@ -60,12 +60,16 @@ struct MainScreenView: View {
     private var toolBarItems: some View {
         ZStack {
             Text(tasksNumberLable)
+                .font(.system(size: 11))
+                .fontWeight(.regular)
                 .frame(
                     maxWidth: .infinity,
                     alignment: .center
                 )
             Image(systemName: "square.and.pencil")
                 .foregroundStyle(.yellow)
+                .font(.system(size: 22))
+                .fontWeight(.regular)
                 .frame(
                     maxWidth: .infinity,
                     alignment: .trailing
