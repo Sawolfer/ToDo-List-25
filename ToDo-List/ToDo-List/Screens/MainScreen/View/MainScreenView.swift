@@ -11,48 +11,47 @@ import SwiftUI
 import CoreData
 
 struct MainScreenView: View {
+    @ObservedObject var presenter: MainScreenPresenter
 
-    @State var searchText: String = ""
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest var todos: FetchedResults<ToDoEntity>
 
-    init() {
-        _todos = FetchRequest(
-            entity: ToDoEntity.entity(),
-            sortDescriptors: [NSSortDescriptor(keyPath: \ToDoEntity.creationDate, ascending: true)]
-        )
-    }
+    private var tasksNumberLable: String {
+        let number = presenter.todoTasks.count
 
-    var tasksNumberLable: String {
-        let number = todos.count
-
-        if   (11...14).contains( number % 100 ) {
+        if (11...14).contains( number % 100 ) {
             return "\(number) Задач"
         }
-        if number % 10 == 1 {
-            return "\(number) Задача"
+        switch number % 10 {
+            case 1:
+                return "\(number) Задача"
+            case (2...4):
+                return "\(number) Задачи"
+            default:
+                return "\(number) Задач"
         }
-        if number % 10 > 1, number % 10 < 5 {
-            return "\(number) Задачи"
-        }
-
-        return "\(number) Задач"
     }
 
     var body: some View {
-        ZStack {
-            ScrollView{
-                ForEach(todos) { todoTask in
+        ScrollView{
+            LazyVStack {
+                ForEach(presenter.filteredList) { todoTask in
                     ToDoEntityView(todoEntity: todoTask)
                 }
             }
+        }
+        .onAppear {
+            presenter.setupViewContext(vc: viewContext)
+            presenter.fetchTasks()
         }
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
                 toolBarItems
             }
         }
-        .searchable(text: $searchText)
+        .searchable(text: $presenter.searchText)
+        .onChange(of: presenter.searchText){
+            presenter.filter()
+        }
         .navigationTitle("Задачи")
     }
 
@@ -74,6 +73,9 @@ struct MainScreenView: View {
                     maxWidth: .infinity,
                     alignment: .trailing
                 )
+                .onTapGesture {
+                    presenter.onCreateNew()
+                }
         }
     }
 }
@@ -92,10 +94,10 @@ struct MainScreenPreview: PreviewProvider {
             return container
         }()
 
-        let mockTodos = ToDoEntity.generateMocks(count: 111, in: container.viewContext)
+        let mockTodos = ToDoEntity.generateMocks(count: 2, in: container.viewContext)
 
         NavigationStack {
-            MainScreenView()
+            MainScreenBuilder.build()
         }
         .preferredColorScheme(.dark)
         .environment(\.managedObjectContext, container.viewContext)

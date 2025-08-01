@@ -9,18 +9,11 @@ import Foundation
 import SwiftUI
 
 struct ToDoEntityView: View {
-
     @ObservedObject var todoEntity: ToDoEntity
-
-    var slashedDateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/mm/yy"
-        return formatter
-    }
-
+    
     var body: some View {
         NavigationLink{
-            PlaceHolderView(name: todoEntity.taskTitle!)
+            RedactorScreenBuilder.build(todoEntity: todoEntity)
         } label: {
             HStack(alignment: .top, spacing: 8) {
                 completeButton
@@ -49,7 +42,7 @@ struct ToDoEntityView: View {
 
     private var todoTaskInfo: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(todoEntity.taskTitle!)
+            Text(todoEntity.taskTitle ?? "New ToDo")
                 .font(.system(size: 16))
                 .strikethrough(todoEntity.isDone)
                 .fontWeight(.medium)
@@ -58,7 +51,7 @@ struct ToDoEntityView: View {
                 .font(.caption)
                 .foregroundStyle(todoEntity.isDone ? .secondary : .primary)
                 .lineLimit(2)
-            Text(slashedDateFormatter.string(from: todoEntity.creationDate!))
+            Text(todoEntity.creationDate?.slashedDate ?? Date.now.slashedDate)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
