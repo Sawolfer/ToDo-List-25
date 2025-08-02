@@ -12,21 +12,14 @@ final class RedactorScreenInteractor {
     var context: NSManagedObjectContext?
 
     func save(todoEntity: ToDoEntity, newTitle: String, newContent: String) throws {
-        guard let context else {
-            throw SaveError.emptyViewContext
-        }
-
         guard !newTitle.trimmingCharacters(in: .whitespaces).isEmpty else {
             throw SaveError.emptyTitle
         }
 
         todoEntity.taskTitle = newTitle
         todoEntity.taskContent = newContent.isEmpty ? nil : newContent
-        todoEntity.creationDate = Date()
-
-        try context.save()
     }
-
+    
     enum SaveError: Error {
         case emptyTitle
         case emptyViewContext

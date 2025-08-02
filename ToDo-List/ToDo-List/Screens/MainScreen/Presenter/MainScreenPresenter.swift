@@ -15,6 +15,9 @@ final class MainScreenPresenter: ObservableObject {
     @Published var todoTasks: [ToDoEntity]
     @Published var filteredList: [ToDoEntity]
 
+    @Published var navigateNewTask: ToDoEntity? = nil
+    @Published var shouldNavigateToTask = false
+
     var viewContext: NSManagedObjectContext?
     private var fetchedResultsController: NSFetchedResultsController<ToDoEntity>?
 
@@ -36,9 +39,10 @@ final class MainScreenPresenter: ObservableObject {
             try fetchedResultsController?.performFetch()
             todoTasks = fetchedResultsController?.fetchedObjects ?? []
             filteredList = todoTasks
+
+            clearEmpty()
         } catch {
             print("Failed to fetch tasks: \(error)")
-            todoTasks = []
         }
     }
 
@@ -69,8 +73,47 @@ final class MainScreenPresenter: ObservableObject {
         newTask.isDone = false
         newTask.creationDate = Date.now
 
-        todoTasks.append(newTask)
+        todoTasks.insert(newTask, at: 0)
         filter()
+
+        navigateNewTask = newTask
+        shouldNavigateToTask = true
+
+        do {
+            try viewContext.save()
+        } catch {
+            print("Save Error: \(error)")
+        }
+    }
+
+    func clearEmpty() {
+        guard let viewContext else {
+            return
+        }
+        todoTasks.forEach { task in
+            if task.taskTitle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == nil {
+                viewContext.delete(task)
+            }
+        }
+        todoTasks.removeAll(where: {$0.taskTitle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == nil})
+        filter()
+
+        do {
+            try viewContext.save()
+        } catch {
+            print("Delete Error: \(error)")
+        }
+    }
+
+    func saveData() {
+        guard let viewContext = viewContext, viewContext.hasChanges else { return }
+
+        do {
+            try viewContext.save()
+            print("Successfully saved all changes")
+        } catch {
+            print("Failed to save changes: \(error.localizedDescription)")
+        }
     }
 }
 

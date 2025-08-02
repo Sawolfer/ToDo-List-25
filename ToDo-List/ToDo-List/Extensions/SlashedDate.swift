@@ -10,7 +10,7 @@ import Foundation
 extension Date {
     var slashedDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "dd/mm/yy"
+        formatter.dateFormat = "dd/MM/yy"
         return formatter.string(from: self)
     }
 }

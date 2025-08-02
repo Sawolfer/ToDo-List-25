@@ -36,12 +36,20 @@ struct MainScreenView: View {
             LazyVStack {
                 ForEach(presenter.filteredList) { todoTask in
                     ToDoEntityView(todoEntity: todoTask)
+
+                    if todoTask.id != presenter.filteredList.last?.id {
+                        dividerLine
+                    }
                 }
             }
+        }
+        .onDisappear {
+            presenter.saveData()
         }
         .onAppear {
             presenter.setupViewContext(vc: viewContext)
             presenter.fetchTasks()
+            presenter.clearEmpty()
         }
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
@@ -52,7 +60,13 @@ struct MainScreenView: View {
         .onChange(of: presenter.searchText){
             presenter.filter()
         }
+        .navigationDestination(isPresented: $presenter.shouldNavigateToTask) {
+           if let task = presenter.navigateNewTask {
+               RedactorScreenBuilder.build(todoEntity: task)
+           }
+       }
         .navigationTitle("Задачи")
+        .scrollDismissesKeyboard(.interactively)
     }
 
     // MARK: - SubViews
@@ -77,6 +91,15 @@ struct MainScreenView: View {
                     presenter.onCreateNew()
                 }
         }
+    }
+
+    private var dividerLine: some View {
+        Rectangle()
+            .fill(.secondary)
+            .frame(
+                height: 1
+            )
+            .padding(.horizontal, 20)
     }
 }
 

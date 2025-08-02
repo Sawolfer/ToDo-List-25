@@ -33,7 +33,9 @@ final class RedactorScreenPresenter: ObservableObject {
     }
 
     func onSave() {
-        DispatchQueue.main.async { [self] in
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
+
             do {
                 try interactor.save(
                     todoEntity: todoEntity,
