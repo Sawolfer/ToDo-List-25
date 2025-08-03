@@ -23,6 +23,10 @@ struct ToDoEntityView: View {
                 maxWidth: .infinity,
                 alignment: .leading
             )
+            .background(
+                Rectangle()
+                    .fill(.clear)
+            )
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)

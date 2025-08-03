@@ -36,6 +36,10 @@ final class RedactorScreenPresenter: ObservableObject {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
+            if taskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let oldTitle = todoEntity.taskTitle {
+                taskTitle = oldTitle
+            }
+
             do {
                 try interactor.save(
                     todoEntity: todoEntity,

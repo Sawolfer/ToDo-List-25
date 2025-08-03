@@ -19,7 +19,7 @@ struct RedactorScreenView: View {
 
     @State var showAlert = false
 
-    enum FieldFocus {
+    private enum FieldFocus {
         case title, content
     }
 
@@ -31,11 +31,11 @@ struct RedactorScreenView: View {
                 taskContentField
             }
         }
-        .scrollIndicators(.hidden)
         .onAppear {
             presenter.setupViewContexxt(vc: viewContext)
         }
         .padding(20)
+        .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
     }
 
@@ -59,7 +59,7 @@ struct RedactorScreenView: View {
                 }
                 .foregroundStyle(.yellow)
                 .onTapGesture {
-                    if presenter.taskTitle.isEmpty {
+                    if presenter.taskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         showAlert = true
                     } else {
                         presenter.onSave()
@@ -69,7 +69,7 @@ struct RedactorScreenView: View {
             }
         }
         .alert(
-            "The title is empty \n The task will be deleted ",
+            "The title is empty \n The task title will be reverted ",
             isPresented: $showAlert, actions: {
                 Button(role: .cancel) {
                     showAlert = false
@@ -77,6 +77,7 @@ struct RedactorScreenView: View {
                     Text("Cancel")
                 }
                 Button(role: .none) {
+                    presenter.onSave()
                     dismiss.callAsFunction()
                 } label: {
                     Text("OK")

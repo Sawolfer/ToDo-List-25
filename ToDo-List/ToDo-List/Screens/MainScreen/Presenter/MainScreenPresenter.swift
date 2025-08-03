@@ -38,6 +38,7 @@ final class MainScreenPresenter: ObservableObject {
         do {
             try fetchedResultsController?.performFetch()
             todoTasks = fetchedResultsController?.fetchedObjects ?? []
+            todoTasks.sort(by: { $0.creationDate! > $1.creationDate! })
             filteredList = todoTasks
 
             clearEmpty()
