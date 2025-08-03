@@ -10,7 +10,9 @@ import SwiftUI
 
 struct ToDoEntityView: View {
     @ObservedObject var todoEntity: ToDoEntity
-    
+
+    @State var selected = false
+
     var body: some View {
         NavigationLink{
             RedactorScreenBuilder.build(todoEntity: todoEntity)
@@ -40,7 +42,6 @@ struct ToDoEntityView: View {
             .fontWeight(.light)
             .onTapGesture {
                 todoEntity.isDone.toggle()
-                print(todoEntity.isDone)
             }
     }
 
