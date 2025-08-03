@@ -69,15 +69,18 @@ private extension MainScreenView {
                 LazyVStack {
                     ForEach(presenter.filteredList) { todoTask in
                         if !isSelected(task: todoTask) {
-                            ToDoEntityView(todoEntity: todoTask) {
+                            ToDoEntityView(
+                                todoEntity: todoTask,
+                                onSelect:  {
                                 selectTask(todoTask)
-                            }
+                            })
 
                             if !isLast(task: todoTask) {
                                 dividerLine
                             }
                         }
                     }
+                    .id(presenter.todoTasks.count)
                 }
             }
             .toolbar { bottomToolbar }
@@ -94,10 +97,15 @@ private extension MainScreenView {
                let task = presenter.filteredList.first(where: { $0.id == selectedTask }) {
                 ToDoEntityView(
                     todoEntity: task,
-                    selected: true
-                ) {
-                    deselectTask()
-                }
+                    selected: true,
+                    onSelect:  {
+                        deselectTask()
+                    },
+                    onDelete: {
+                        deselectTask()
+                        presenter.onDelete(todoEntity: task)
+                    }
+                )
                 .zIndex(1)
                 .background(Color(.systemBackground))
                 .cornerRadius(12)
@@ -190,7 +198,6 @@ private extension MainScreenView {
         presenter.clearEmpty()
     }
 }
-
 
 // MARK: - Preview Provider
 struct MainScreenPreview: PreviewProvider {

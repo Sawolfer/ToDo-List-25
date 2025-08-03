@@ -8,17 +8,28 @@
 import Foundation
 import SwiftUI
 
+import CoreData
+
 struct ToDoEntityView: View {
     @ObservedObject var todoEntity: ToDoEntity
+    @Environment(\.managedObjectContext) var viewContext
+
+    @State var showShareSheet = false
 
     @State var selected = false
-    var onSelect: () -> Void
+    var onSelect: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
 
     var body: some View {
         bodyContent
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .buttonStyle(.plain)
+            .sheet(isPresented: $showShareSheet) {
+                VStack {
+                    shareSheet
+                }
+            }
     }
 
     @ViewBuilder
@@ -52,7 +63,7 @@ struct ToDoEntityView: View {
                     alignment: .leading
                 )
                 .onLongPressGesture(minimumDuration: 0.3) {
-                    onSelect()
+                    onSelect?()
                 }
             }
         }
@@ -83,6 +94,16 @@ struct ToDoEntityView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var shareSheet: some View {
+        ShareLink(
+            item: todoEntity.taskTitle!,
+            preview: SharePreview(
+                "Share your ToDo: \(todoEntity.taskTitle!)",
+                image: Image(systemName: "plus")
+            )
+        )
     }
 }
 
@@ -121,11 +142,13 @@ private extension ToDoEntityView {
     }
 
     var shareButton: some View {
-        HStack(spacing: 8) {
-            Text("Поделиться")
-                .font(.body)
-            Spacer()
-            Image(systemName: "square.and.arrow.up")
+        ShareLink(item: todoEntity.taskTitle!) {
+            HStack(spacing: 8) {
+                Text("Поделиться")
+                    .font(.body)
+                Spacer()
+                Image(systemName: "square.and.arrow.up")
+            }
         }
         .padding(.horizontal)
         .foregroundStyle(.black)
@@ -138,6 +161,9 @@ private extension ToDoEntityView {
                 .font(.body)
             Spacer()
             Image(systemName: "trash")
+        }
+        .onTapGesture {
+            onDelete?()
         }
         .padding(.horizontal)
         .foregroundStyle(Color(red: 215/255, green: 0, blue: 21/255))

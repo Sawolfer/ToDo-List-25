@@ -69,6 +69,7 @@ final class MainScreenPresenter: ObservableObject {
         guard let viewContext else {
             return
         }
+
         let newTask = ToDoEntity(context: viewContext)
         newTask.id = UUID()
         newTask.isDone = false
@@ -85,6 +86,22 @@ final class MainScreenPresenter: ObservableObject {
         } catch {
             print("Save Error: \(error)")
         }
+    }
+
+    func onDelete(todoEntity: ToDoEntity) {
+        guard let viewContext else {
+            return
+        }
+
+        viewContext.delete(todoEntity)
+        
+        do {
+            try viewContext.save()
+        } catch {
+            print("Deletion Error: \(error)")
+        }
+
+        fetchTasks()
     }
 
     func clearEmpty() {
