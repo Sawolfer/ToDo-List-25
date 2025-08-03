@@ -14,8 +14,40 @@ struct MainScreenView: View {
     @ObservedObject var presenter: MainScreenPresenter
 
     @Environment(\.managedObjectContext) private var viewContext
+    @State var selectedTask: UUID? = nil
 
-    private var tasksNumberLable: String {
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                mainContentLayer
+
+                selectedTaskLayer
+
+                tapDismissLayer
+            }
+            .onDisappear {
+                presenter.saveData()
+            }
+            .onAppear {
+                selectedTask = nil
+                setupPresenter()
+            }
+            .onChange(of: presenter.searchText){
+                presenter.filter()
+            }
+            .navigationDestination(isPresented: $presenter.shouldNavigateToTask) {
+                if let task = presenter.navigateNewTask {
+                    RedactorScreenBuilder.build(todoEntity: task)
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+    }
+}
+
+// MARK: - SubViews
+private extension MainScreenView {
+    var tasksNumberLable: String {
         let number = presenter.todoTasks.count
 
         if (11...14).contains( number % 100 ) {
@@ -31,46 +63,71 @@ struct MainScreenView: View {
         }
     }
 
-    var body: some View {
-        ScrollView{
-            LazyVStack {
-                ForEach(presenter.filteredList) { todoTask in
-                    ToDoEntityView(todoEntity: todoTask)
+    var mainContentLayer: some View {
+        NavigationView {
+            ScrollView{
+                LazyVStack {
+                    ForEach(presenter.filteredList) { todoTask in
+                        if !isSelected(task: todoTask) {
+                            ToDoEntityView(todoEntity: todoTask) {
+                                selectTask(todoTask)
+                            }
 
-                    if todoTask.id != presenter.filteredList.last?.id {
-                        dividerLine
+                            if !isLast(task: todoTask) {
+                                dividerLine
+                            }
+                        }
                     }
                 }
             }
-        }
-        .onDisappear {
-            presenter.saveData()
-        }
-        .onAppear {
-            presenter.setupViewContext(vc: viewContext)
-            presenter.fetchTasks()
-            presenter.clearEmpty()
-        }
-        .toolbar {
-            ToolbarItem(placement: .bottomBar) {
-                toolBarItems
-            }
+            .toolbar { bottomToolbar }
+            .navigationTitle("Задачи")
         }
         .searchable(text: $presenter.searchText)
-        .onChange(of: presenter.searchText){
-            presenter.filter()
-        }
-        .navigationDestination(isPresented: $presenter.shouldNavigateToTask) {
-           if let task = presenter.navigateNewTask {
-               RedactorScreenBuilder.build(todoEntity: task)
-           }
-       }
-        .navigationTitle("Задачи")
-        .scrollDismissesKeyboard(.interactively)
+        .blur(radius: selectedTask != nil ? 2 : 0)
+        .disabled(selectedTask != nil)
     }
 
-    // MARK: - SubViews
-    private var toolBarItems: some View {
+    var selectedTaskLayer: some View {
+        Group {
+            if let selectedTask,
+               let task = presenter.filteredList.first(where: { $0.id == selectedTask }) {
+                ToDoEntityView(
+                    todoEntity: task,
+                    selected: true
+                ) {
+                    deselectTask()
+                }
+                .zIndex(1)
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+                .shadow(radius: 10)
+                .padding()
+                .transition(.scale)
+            }
+        }
+    }
+
+    var tapDismissLayer: some View {
+        Group {
+            if selectedTask != nil {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        deselectTask()
+                    }
+                    .zIndex(0)
+            }
+        }
+    }
+
+    var bottomToolbar: some ToolbarContent {
+        ToolbarItem(placement: .bottomBar) {
+            toolBarItems
+        }
+    }
+
+    var toolBarItems: some View {
         ZStack {
             Text(tasksNumberLable)
                 .font(.system(size: 11))
@@ -93,7 +150,7 @@ struct MainScreenView: View {
         }
     }
 
-    private var dividerLine: some View {
+    var dividerLine: some View {
         Rectangle()
             .fill(.secondary)
             .frame(
@@ -102,6 +159,36 @@ struct MainScreenView: View {
             .padding(.horizontal, 20)
     }
 }
+
+// MARK: - Private Functions
+private extension MainScreenView {
+    func isSelected(task: ToDoEntity) -> Bool {
+        selectedTask == task.id
+    }
+
+    func isLast(task: ToDoEntity) -> Bool {
+        task.id == presenter.filteredList.last?.id
+    }
+
+    func selectTask(_ task: ToDoEntity) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            selectedTask = task.id
+        }
+    }
+
+    func deselectTask() {
+        withAnimation {
+            selectedTask = nil
+        }
+    }
+
+    func setupPresenter() {
+        presenter.setupViewContext(vc: viewContext)
+        presenter.fetchTasks()
+        presenter.clearEmpty()
+    }
+}
+
 
 // MARK: - Preview Provider
 struct MainScreenPreview: PreviewProvider {
@@ -119,10 +206,9 @@ struct MainScreenPreview: PreviewProvider {
 
         let mockTodos = ToDoEntity.generateMocks(count: 2, in: container.viewContext)
 
-        NavigationStack {
-            MainScreenBuilder.build()
-        }
-        .preferredColorScheme(.dark)
-        .environment(\.managedObjectContext, container.viewContext)
+
+        MainScreenBuilder.build()
+            .preferredColorScheme(.dark)
+            .environment(\.managedObjectContext, container.viewContext)
     }
 }
