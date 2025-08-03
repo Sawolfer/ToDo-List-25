@@ -16,9 +16,9 @@ struct ToDoEntityView: View {
 
     var body: some View {
         bodyContent
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .buttonStyle(.plain)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -32,7 +32,11 @@ struct ToDoEntityView: View {
                             .fill(Color(.systemGray4))
                     )
                 contextMenu
-                    .frame(width: 280)
+                    .padding(.vertical, 4)
+                    .frame(
+                        width: 254,
+                        height: 132
+                    )
             }
         } else {
             NavigationLink {

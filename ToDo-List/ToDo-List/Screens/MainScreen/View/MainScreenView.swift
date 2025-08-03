@@ -102,10 +102,12 @@ private extension MainScreenView {
                 .background(Color(.systemBackground))
                 .cornerRadius(12)
                 .shadow(radius: 10)
-                .padding()
                 .transition(.scale)
             }
         }
+        .frame(
+            alignment: .centerLastTextBaseline
+        )
     }
 
     var tapDismissLayer: some View {
