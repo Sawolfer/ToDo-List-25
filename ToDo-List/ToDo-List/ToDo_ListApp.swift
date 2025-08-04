@@ -13,7 +13,6 @@ struct ToDo_ListApp: App {
 
     let container: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "ToDoModels")
-//        container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         container.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Failed to load Core Data: \(error)")
@@ -24,11 +23,9 @@ struct ToDo_ListApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                MainScreenBuilder.build()
-            }
-            .preferredColorScheme(.dark)
-            .environment(\.managedObjectContext, container.viewContext)
+            MainScreenBuilder.build()
+                .preferredColorScheme(.dark)
+                .environment(\.managedObjectContext, container.viewContext)
         }
     }
 }

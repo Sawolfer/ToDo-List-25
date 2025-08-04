@@ -14,8 +14,6 @@ struct ToDoEntityView: View {
     @ObservedObject var todoEntity: ToDoEntity
     @Environment(\.managedObjectContext) var viewContext
 
-    @State var showShareSheet = false
-
     @State var selected = false
     var onSelect: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
@@ -25,11 +23,6 @@ struct ToDoEntityView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .buttonStyle(.plain)
-            .sheet(isPresented: $showShareSheet) {
-                VStack {
-                    shareSheet
-                }
-            }
     }
 
     @ViewBuilder
@@ -38,6 +31,10 @@ struct ToDoEntityView: View {
             VStack {
                 todoTaskInfo
                     .padding()
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
                     .background(
                         RoundedRectangle(cornerRadius: 20)
                             .fill(Color(.systemGray4))
@@ -57,11 +54,11 @@ struct ToDoEntityView: View {
                     completeButton
                     todoTaskInfo
                 }
-                .contentShape(Rectangle())
                 .frame(
                     maxWidth: .infinity,
                     alignment: .leading
                 )
+                .contentShape(Rectangle())
                 .onLongPressGesture(minimumDuration: 0.3) {
                     onSelect?()
                 }
@@ -142,7 +139,7 @@ private extension ToDoEntityView {
     }
 
     var shareButton: some View {
-        ShareLink(item: todoEntity.taskTitle!) {
+        ShareLink(item: todoEntity.taskTitle ?? "") {
             HStack(spacing: 8) {
                 Text("Поделиться")
                     .font(.body)
