@@ -41,12 +41,28 @@ final class MainScreenPresenter: MainScreenPresenterProtocol {
 
     func setupViewContext(_ context: NSManagedObjectContext) {
         interactor.setupViewContext(context)
+
+        syncWithAPI()
     }
 
     func fetchTasks() {
         todoTasks = interactor.fetchTasks()
         filteredList = todoTasks
         clearEmpty()
+    }
+
+    func syncWithAPI() {
+        if FirstCallChecker.getValue() { return }
+
+        interactor.makeRequest { result in
+            switch result {
+                case .success(_):
+                    FirstCallChecker.setValue()
+                    self.fetchTasks()
+                case .failure(let error):
+                    print(error)
+            }
+        }
     }
 
     func filter() {

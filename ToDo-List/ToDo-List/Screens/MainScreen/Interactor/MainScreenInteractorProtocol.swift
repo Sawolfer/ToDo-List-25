@@ -10,6 +10,7 @@ import CoreData
 protocol MainScreenInteractorProtocol: AnyObject {
     func setupViewContext(_ context: NSManagedObjectContext)
     func fetchTasks() -> [ToDoEntity]
+    func makeRequest(completion: @escaping (Result<Bool, Error>) -> Void)
     func createNewTask() throws -> ToDoEntity
     func deleteTask(_ task: ToDoEntity) throws
     func saveChanges()
@@ -23,22 +24,24 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
     func setupViewContext(_ context: NSManagedObjectContext) {
         self.viewContext = context
         setupFetchedResultsController()
-//        createRequest()
     }
 
-    func createRequest() {
-        var networkLayer = NetworkLayer(context: viewContext!)
+    func makeRequest(completion: @escaping (Result<Bool, Error>) -> Void) {
+        let networkLayer = NetworkLayer(context: viewContext!)
 
-//        networkLayer.getToDos { completion in
-//            switch completion {
-//                case .success(let todos):
-//                    todos.forEach { todo in
-//                        print(todo.taskTitle!)
-//                    }
-//                case .failure(let error):
-//                    print(error)
-//            }
-//        }
+        networkLayer.getToDos { result in
+            switch result {
+                case .success(let todos):
+                    todos.forEach { todo in
+                        self.viewContext?.insert(todo)
+                    }
+                    completion(.success(true))
+                case .failure(let error):
+                    completion(.failure(error))
+            }
+        }
+        
+        saveChanges()
     }
 
     func fetchTasks() -> [ToDoEntity] {
