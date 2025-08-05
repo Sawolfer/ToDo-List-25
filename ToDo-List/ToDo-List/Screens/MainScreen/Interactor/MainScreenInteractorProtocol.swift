@@ -1,3 +1,12 @@
+//
+//  MainScreenInteractorProtocol.swift
+//  ToDo-List
+//
+//  Created by Савва Пономарев on 04.08.2025.
+//
+
+import CoreData
+
 protocol MainScreenInteractorProtocol: AnyObject {
     func setupViewContext(_ context: NSManagedObjectContext)
     func fetchTasks() -> [ToDoEntity]
@@ -14,15 +23,31 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
     func setupViewContext(_ context: NSManagedObjectContext) {
         self.viewContext = context
         setupFetchedResultsController()
+//        createRequest()
     }
-    
+
+    func createRequest() {
+        var networkLayer = NetworkLayer(context: viewContext!)
+
+//        networkLayer.getToDos { completion in
+//            switch completion {
+//                case .success(let todos):
+//                    todos.forEach { todo in
+//                        print(todo.taskTitle!)
+//                    }
+//                case .failure(let error):
+//                    print(error)
+//            }
+//        }
+    }
+
     func fetchTasks() -> [ToDoEntity] {
-        guard let context = viewContext else { return [] }
+        guard viewContext != nil else { return [] }
         
         do {
             try fetchedResultsController?.performFetch()
             let tasks = fetchedResultsController?.fetchedObjects ?? []
-            return tasks.sorted { ($0.creationDate ?? Date()) > ($1.creationDate ?? Date()) }
+            return tasks.sorted { ($0.creationDate ?? Date()) > ($1.creationDate ?? Date())}
         } catch {
             print("Fetch error: \(error)")
             return []
@@ -70,8 +95,9 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
     
     private func setupFetchedResultsController() {
         guard let context = viewContext else { return }
-        
-        let request: NSFetchRequest<ToDoEntity> = ToDoEntity.fetchRequest()
+
+        let request = ToDoEntity.fetchRequest()
+//        let request = NSFetchRequest<ToDoEntity>()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ToDoEntity.creationDate, ascending: false)]
         
         fetchedResultsController = NSFetchedResultsController(
