@@ -10,144 +10,100 @@ import SwiftUI
 
 import CoreData
 
-final class MainScreenPresenter: ObservableObject {
-    @Published var searchText: String
-    @Published var todoTasks: [ToDoEntity]
-    @Published var filteredList: [ToDoEntity]
+protocol MainScreenPresenterProtocol: ObservableObject {
+    var searchText: String { get set }
+    var todoTasks: [ToDoEntity] { get }
+    var filteredList: [ToDoEntity] { get }
+    var navigateNewTask: ToDoEntity? { get set }
+    var shouldNavigateToTask: Bool { get set }
 
+    func setupViewContext(_ context: NSManagedObjectContext)
+    func fetchTasks()
+    func filter()
+    func onCreateNew()
+    func onDelete(_ task: ToDoEntity)
+    func clearEmpty()
+    func saveData()
+}
+
+final class MainScreenPresenter: MainScreenPresenterProtocol {
+    @Published var searchText: String = ""
+    @Published private(set) var todoTasks: [ToDoEntity] = []
+    @Published private(set) var filteredList: [ToDoEntity] = []
     @Published var navigateNewTask: ToDoEntity? = nil
-    @Published var shouldNavigateToTask = false
+    @Published var shouldNavigateToTask: Bool = false
 
-    var viewContext: NSManagedObjectContext?
-    private var fetchedResultsController: NSFetchedResultsController<ToDoEntity>?
+    private let interactor: MainScreenInteractorProtocol
 
-    // MARK: Init
-    init() {
-        self.searchText = ""
-        self.todoTasks = []
-        self.filteredList = []
+    init(interactor: MainScreenInteractorProtocol = MainScreenInteractor()) {
+        self.interactor = interactor
     }
 
-    // MARK: - Tasks logic
-    func setupViewContext(vc: NSManagedObjectContext) {
-        viewContext = vc
-        setupFetchedResultsController()
+    func setupViewContext(_ context: NSManagedObjectContext) {
+        interactor.setupViewContext(context)
+
+        syncWithAPI()
     }
- 
+
     func fetchTasks() {
-        do {
-            try fetchedResultsController?.performFetch()
-            todoTasks = fetchedResultsController?.fetchedObjects ?? []
-            todoTasks.sort(by: { $0.creationDate! > $1.creationDate! })
-            filteredList = todoTasks
+        todoTasks = interactor.fetchTasks()
+        filteredList = todoTasks
+        clearEmpty()
+    }
 
-            clearEmpty()
-        } catch {
-            print("Failed to fetch tasks: \(error)")
+    func syncWithAPI() {
+        if FirstCallChecker.getValue() { return }
+
+        interactor.makeRequest { result in
+            switch result {
+                case .success(_):
+                    FirstCallChecker.setValue()
+                    self.fetchTasks()
+                case .failure(let error):
+                    print(error)
+            }
         }
     }
 
-    /// filter `filteredList` with new search string
     func filter() {
-        let toSearch = searchText.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard toSearch != "" else  {
-            filteredList = todoTasks
-            return
-        }
-
-        filteredList = todoTasks.filter(
-            {
-                $0.taskTitle?.lowercased().contains(toSearch) ?? false ||
-                $0.taskContent?.lowercased().contains(toSearch) ?? false
-            }
-        )
-        filteredList.sort(by: { $0.creationDate! > $1.creationDate! })
+        filteredList = interactor.filterTasks(todoTasks, searchText: searchText)
     }
 
     func onCreateNew() {
-        guard let viewContext else {
-            return
-        }
-
-        let newTask = ToDoEntity(context: viewContext)
-        newTask.id = UUID()
-        newTask.isDone = false
-        newTask.creationDate = Date.now
-
-        todoTasks.insert(newTask, at: 0)
-        filter()
-
-        navigateNewTask = newTask
-        shouldNavigateToTask = true
-
         do {
-            try viewContext.save()
+            let newTask = try interactor.createNewTask()
+            todoTasks.insert(newTask, at: 0)
+            filter()
+            navigateNewTask = newTask
+            shouldNavigateToTask = true
         } catch {
-            print("Save Error: \(error)")
+            print("Create error: \(error)")
         }
     }
 
-    func onDelete(todoEntity: ToDoEntity) {
-        guard let viewContext else {
-            return
-        }
-
-        viewContext.delete(todoEntity)
-        
+    func onDelete(_ task: ToDoEntity) {
         do {
-            try viewContext.save()
+            try interactor.deleteTask(task)
+            fetchTasks()
         } catch {
-            print("Deletion Error: \(error)")
+            print("Delete error: \(error)")
         }
-
-        fetchTasks()
     }
 
     func clearEmpty() {
-        guard let viewContext else {
-            return
+        let emptyTasks = todoTasks.filter {
+            $0.taskTitle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
         }
-        todoTasks.forEach { task in
-            if task.taskTitle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == nil {
-                viewContext.delete(task)
-            }
-        }
-        todoTasks.removeAll(where: {$0.taskTitle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == nil})
-        filter()
 
-        do {
-            try viewContext.save()
-        } catch {
-            print("Delete Error: \(error)")
+        emptyTasks.forEach { task in
+            try? interactor.deleteTask(task)
         }
+
+        todoTasks.removeAll(where: {emptyTasks.contains($0)})
+        filter()
     }
 
     func saveData() {
-        guard let viewContext = viewContext, viewContext.hasChanges else { return }
-
-        do {
-            try viewContext.save()
-            print("Successfully saved all changes")
-        } catch {
-            print("Failed to save changes: \(error.localizedDescription)")
-        }
-    }
-}
-
-// MARK: - Private
-private extension MainScreenPresenter {
-    func setupFetchedResultsController() {
-        guard let context = viewContext else { return }
-
-        let request: NSFetchRequest<ToDoEntity> = ToDoEntity.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \ToDoEntity.creationDate, ascending: true)]
-
-        fetchedResultsController = NSFetchedResultsController(
-            fetchRequest: request,
-            managedObjectContext: context,
-            sectionNameKeyPath: nil,
-            cacheName: nil
-        )
+        interactor.saveChanges()
     }
 }

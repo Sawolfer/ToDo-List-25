@@ -10,12 +10,21 @@ import SwiftUI
 
 import CoreData
 
-final class RedactorScreenPresenter: ObservableObject {
+protocol RedactorScreenPresenterProtocol: ObservableObject {
+    var todoEntity: ToDoEntity { get set }
+    var taskTitle: String { get set }
+    var taskContent: String { get set}
+
+    func setupViewContexxt(vc: NSManagedObjectContext)
+    func onSave()
+}
+
+final class RedactorScreenPresenter: RedactorScreenPresenterProtocol {
     @ObservedObject var todoEntity: ToDoEntity
     @Published var taskTitle: String
     @Published var taskContent: String
 
-    private var interactor: RedactorScreenInteractor
+    private var interactor: RedactorScreenInteractorProtocol
 
     init(
         todoEntity: ToDoEntity,
@@ -29,7 +38,7 @@ final class RedactorScreenPresenter: ObservableObject {
     }
 
     func setupViewContexxt(vc: NSManagedObjectContext) {
-        interactor.context = vc
+        interactor.setupViewContext(vc)
     }
 
     func onSave() {

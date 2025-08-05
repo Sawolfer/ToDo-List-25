@@ -67,7 +67,7 @@ private extension MainScreenView {
         NavigationView {
             ScrollView{
                 LazyVStack {
-                    ForEach(presenter.filteredList) { todoTask in
+                    ForEach(presenter.filteredList, id: \.id) { todoTask in
                         if !isSelected(task: todoTask) {
                             ToDoEntityView(
                                 todoEntity: todoTask,
@@ -103,7 +103,7 @@ private extension MainScreenView {
                     },
                     onDelete: {
                         deselectTask()
-                        presenter.onDelete(todoEntity: task)
+                        presenter.onDelete(task)
                     }
                 )
                 .zIndex(1)
@@ -193,7 +193,7 @@ private extension MainScreenView {
     }
 
     func setupPresenter() {
-        presenter.setupViewContext(vc: viewContext)
+        presenter.setupViewContext(viewContext)
         presenter.fetchTasks()
         presenter.clearEmpty()
     }

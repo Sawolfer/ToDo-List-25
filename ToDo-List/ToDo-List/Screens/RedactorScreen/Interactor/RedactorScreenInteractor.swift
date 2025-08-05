@@ -8,8 +8,17 @@
 import Foundation
 import CoreData
 
-final class RedactorScreenInteractor {
+protocol RedactorScreenInteractorProtocol: AnyObject {
+    func save(todoEntity: ToDoEntity, newTitle: String, newContent: String) throws
+    func setupViewContext(_ context: NSManagedObjectContext)
+}
+
+final class RedactorScreenInteractor: RedactorScreenInteractorProtocol {
     var context: NSManagedObjectContext?
+
+    func setupViewContext(_ context: NSManagedObjectContext) {
+        self.context = context
+    }
 
     func save(todoEntity: ToDoEntity, newTitle: String, newContent: String) throws {
         guard !newTitle.trimmingCharacters(in: .whitespaces).isEmpty else {
