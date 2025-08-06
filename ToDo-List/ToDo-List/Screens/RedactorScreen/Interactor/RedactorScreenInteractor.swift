@@ -27,6 +27,10 @@ final class RedactorScreenInteractor: RedactorScreenInteractorProtocol {
 
         todoEntity.taskTitle = newTitle
         todoEntity.taskContent = newContent.isEmpty ? nil : newContent
+
+        context?.perform {
+            try? self.context?.save()
+        }
     }
     
     enum SaveError: Error {

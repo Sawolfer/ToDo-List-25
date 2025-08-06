@@ -41,7 +41,6 @@ final class MainScreenPresenter: MainScreenPresenterProtocol {
 
     func setupViewContext(_ context: NSManagedObjectContext) {
         interactor.setupViewContext(context)
-
         syncWithAPI()
     }
 

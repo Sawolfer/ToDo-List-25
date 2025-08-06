@@ -73,6 +73,7 @@ struct ToDoEntityView: View {
             .fontWeight(.light)
             .onTapGesture {
                 todoEntity.isDone.toggle()
+                try? viewContext.save()
             }
     }
 

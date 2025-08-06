@@ -66,7 +66,9 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
         newTask.id = UUID()
         newTask.isDone = false
         newTask.creationDate = Date()
-        try context.save()
+
+        saveChanges()
+        
         return newTask
     }
     
@@ -80,8 +82,10 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
     }
     
     func saveChanges() {
-        guard let context = viewContext, context.hasChanges else { return }
-        try? context.save()
+        guard let context = self.viewContext, context.hasChanges else { return }
+        context.perform {
+            try? context.save()
+        }
     }
     
     func filterTasks(_ tasks: [ToDoEntity], searchText: String) -> [ToDoEntity] {
@@ -100,7 +104,6 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
         guard let context = viewContext else { return }
 
         let request = ToDoEntity.fetchRequest()
-//        let request = NSFetchRequest<ToDoEntity>()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ToDoEntity.creationDate, ascending: false)]
         
         fetchedResultsController = NSFetchedResultsController(
