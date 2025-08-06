@@ -32,4 +32,8 @@ final class FirstCallChecker {
         
         return value
     }
+
+    static func cleanValue() {
+        defaults.removeObject(forKey: "firstCall")
+    }
 }

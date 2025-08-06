@@ -64,19 +64,19 @@ final class NetworkLayer: NetworkLayerProtocol {
             }.resume()
         }
 
-        DispatchQueue.global(qos: .background).async(execute: networkCallItem)
+        DispatchQueue.global(qos: .userInitiated).async(execute: networkCallItem)
     }
 
     enum NetworkError: Error {
         case invalidURL
         case noData
     }
+}
 
-    struct TodoResponse: Decodable {
-        let todos: [ToDoEntity]
+struct TodoResponse: Decodable {
+    let todos: [ToDoEntity]
 
-        enum CodingKeys: CodingKey{
-            case todos
-        }
+    enum CodingKeys: CodingKey{
+        case todos
     }
 }

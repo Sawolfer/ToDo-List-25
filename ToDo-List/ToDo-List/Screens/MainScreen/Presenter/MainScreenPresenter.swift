@@ -69,23 +69,24 @@ final class MainScreenPresenter: MainScreenPresenterProtocol {
     }
 
     func onCreateNew() {
-        do {
-            let newTask = try interactor.createNewTask()
-            todoTasks.insert(newTask, at: 0)
-            filter()
-            navigateNewTask = newTask
-            shouldNavigateToTask = true
-        } catch {
-            print("Create error: \(error)")
+        interactor.createNewTask() { result in
+            switch result{
+                case .success(let newTask) :
+                    self.todoTasks.insert(newTask, at: 0)
+                    self.filter()
+                    self.navigateNewTask = newTask
+                    self.shouldNavigateToTask = true
+                case .failure(let error):
+                    print("Error while Creating \(error)")
+            }
         }
     }
 
     func onDelete(_ task: ToDoEntity) {
-        do {
-            try interactor.deleteTask(task)
-            fetchTasks()
-        } catch {
-            print("Delete error: \(error)")
+        interactor.deleteTask(task) { error in
+            if let error {
+                print("Error while Deleting \(error)")
+            }
         }
     }
 
@@ -95,7 +96,11 @@ final class MainScreenPresenter: MainScreenPresenterProtocol {
         }
 
         emptyTasks.forEach { task in
-            try? interactor.deleteTask(task)
+            interactor.deleteTask(task) { error in
+                if let error {
+                    print("Error while Clearing \(error)")
+                }
+            }
         }
 
         todoTasks.removeAll(where: {emptyTasks.contains($0)})

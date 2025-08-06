@@ -72,8 +72,10 @@ struct ToDoEntityView: View {
             .foregroundStyle(todoEntity.isDone ? .yellow : .secondary)
             .fontWeight(.light)
             .onTapGesture {
-                todoEntity.isDone.toggle()
-                try? viewContext.save()
+                DispatchQueue.main.async {
+                    todoEntity.isDone.toggle()
+                    try? viewContext.save()
+                }
             }
     }
 

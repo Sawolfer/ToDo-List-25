@@ -11,8 +11,8 @@ protocol MainScreenInteractorProtocol: AnyObject {
     func setupViewContext(_ context: NSManagedObjectContext)
     func fetchTasks() -> [ToDoEntity]
     func makeRequest(completion: @escaping (Result<Bool, Error>) -> Void)
-    func createNewTask() throws -> ToDoEntity
-    func deleteTask(_ task: ToDoEntity) throws
+    func createNewTask(completion: @escaping (Result<ToDoEntity, Error>) -> Void)
+    func deleteTask(_ task: ToDoEntity, completion: @escaping (Error?) -> Void)
     func saveChanges()
     func filterTasks(_ tasks: [ToDoEntity], searchText: String) -> [ToDoEntity]
 }
@@ -20,7 +20,12 @@ protocol MainScreenInteractorProtocol: AnyObject {
 final class MainScreenInteractor: MainScreenInteractorProtocol {
     private var viewContext: NSManagedObjectContext?
     private var fetchedResultsController: NSFetchedResultsController<ToDoEntity>?
-    
+
+    private let backgroundQueue = DispatchQueue(
+        label: "com.todos.backgroundQueue",
+        qos: .userInitiated
+    )
+
     func setupViewContext(_ context: NSManagedObjectContext) {
         self.viewContext = context
         setupFetchedResultsController()
@@ -57,28 +62,52 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
         }
     }
     
-    func createNewTask() throws -> ToDoEntity {
-        guard let context = viewContext else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No context available"])
-        }
-        
-        let newTask = ToDoEntity(context: context)
-        newTask.id = UUID()
-        newTask.isDone = false
-        newTask.creationDate = Date()
+    func createNewTask(completion: @escaping (Result<ToDoEntity, Error>) -> Void) {
+        backgroundQueue.async {
+            guard let context = self.viewContext else {
+                DispatchQueue.main.async {
+                    completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No context available"])))
+                }
+                return
+            }
 
-        saveChanges()
-        
-        return newTask
+            let newTask = ToDoEntity(context: context)
+            newTask.id = UUID()
+            newTask.isDone = false
+            newTask.creationDate = Date()
+
+            do {
+                try context.save()
+                DispatchQueue.main.async {
+                    completion(.success(newTask))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+            }
+        }
     }
     
-    func deleteTask(_ task: ToDoEntity) throws {
-        guard let context = viewContext else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No context available"])
+    func deleteTask(_ task: ToDoEntity, completion: @escaping (Error?) -> Void) {
+        backgroundQueue.async {
+            guard let context = self.viewContext else {
+                completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No context available"]))
+                return 
+            }
+
+            context.delete(task)
+            do {
+                try context.save()
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(error)
+                }
+            }
         }
-        
-        context.delete(task)
-        try context.save()
     }
     
     func saveChanges() {
@@ -112,5 +141,9 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
             sectionNameKeyPath: nil,
             cacheName: nil
         )
+    }
+
+    enum SavingError: Error {
+        case emptyViewContext
     }
 }
