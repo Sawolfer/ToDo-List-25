@@ -15,6 +15,7 @@ A modern iOS To-Do List app built with SwiftUI and Core Data.
 
 ## Project Structure
 
+```
 ToDo-List/
 ├── ToDo-List/
 │ ├── Assets.xcassets/ # App assets
@@ -25,6 +26,7 @@ ToDo-List/
 │ └── ToDo_ListApp.swift # App entry point
 ├── ToDo-ListTests/ # Unit tests
 └── ToDo-List.xcodeproj/ # Xcode project files
+```
 
 ## Getting Started
 
@@ -32,6 +34,8 @@ ToDo-List/
    ```sh
    git clone https://github.com/Sawolfer/ToDo-List-25.git
    ```
+
+```
 
 2 **Open in Xcode:**
 
@@ -45,3 +49,4 @@ ToDo-List/
 
 - Unit tests are located in the ToDo-ListTests folder.
 - To run tests, select the ToDo-List scheme and press Cmd+U in Xcode.
+```
