@@ -149,33 +149,25 @@ private extension ToDoEntityView {
                 Spacer()
                 Image(systemName: "square.and.arrow.up")
             }
+            .padding(.horizontal)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal)
         .foregroundStyle(.black)
-        .contentShape(Rectangle())
     }
 
     var deleteButton: some View {
-        HStack(spacing: 8) {
-            Text("Удалить")
-                .font(.body)
-            Spacer()
-            Image(systemName: "trash")
-        }
-        .onTapGesture {
+        Button {
             onDelete?()
+        } label: {
+            HStack(spacing: 8) {
+                Text("Удалить")
+                    .font(.body)
+                Spacer()
+                Image(systemName: "trash")
+            }
+            .padding(.horizontal)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal)
         .foregroundStyle(Color(red: 215/255, green: 0, blue: 21/255))
-        .contentShape(Rectangle())
-    }
-}
-
-struct PlaceHolderView: View {
-
-    @State var name: String
-
-    var body: some View {
-        Text(name)
     }
 }
